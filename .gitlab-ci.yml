@@ -1,0 +1,59 @@
+image: node:8
+
+stages:
+  - build
+
+package-develop:
+  type: build
+  only:
+    - dev
+  environment:
+    name: development/package
+  before_script:
+    - echo "${JS_CONFIG_ENV}" > ./.env
+    - echo fs.inotify.max_user_instances=524288 | tee -a /etc/sysctl.conf && sysctl -p
+    - echo fs.inotify.max_user_watches=524288 | tee -a /etc/sysctl.conf && sysctl -p
+    - echo fs.inotify.max_queued_events=524288 | tee -a /etc/sysctl.conf && sysctl -p
+    - yarn global add expo-cli
+    - mkdir binaries
+    - expo login -u ${EXPO_USERNAME} -p ${EXPO_PASSWORD}
+  script:
+    - yarn install
+    - expo publish --non-interactive --release-channel develop
+    - expo build:android --non-interactive --no-publish --no-wait --release-channel develop
+    - ./ci_scripts/wait.sh android
+    - curl -o binaries/divdot-develop-${CI_COMMIT_SHA}.apk "$(expo url:apk --non-interactive)"
+    - expo build:ios --non-interactive --no-publish --no-wait --release-channel develop
+    - ./ci_scripts/wait.sh ios
+    - curl -o binaries/divdot-develop-${CI_COMMIT_SHA}.ipa "$(expo url:ipa --non-interactive)"
+  artifacts:
+    name: 'mobile-develop-${CI_COMMIT_SHA}'
+    when: on_success
+    paths:
+      - binaries
+
+package-production:
+  type: build
+  only:
+    - master
+  environment:
+    name: production/package
+  before_script:
+    - echo "${JS_CONFIG_ENV}" > ./.env
+    - yarn global add expo-cli
+    - mkdir binaries
+    - expo login -u ${EXPO_USERNAME} -p ${EXPO_PASSWORD}
+  script:
+    - yarn install
+    - expo publish --non-interactive --release-channel production
+    - expo build:android --non-interactive --no-publish --no-wait --release-channel production
+    - ./ci_scripts/wait.sh android
+    - curl -o binaries/divdot-production-${CI_COMMIT_SHA}.apk "$(expo url:apk --non-interactive)"
+    - expo build:ios --non-interactive --no-publish --no-wait --release-channel production
+    - ./ci_scripts/wait.sh ios
+    - curl -o binaries/divdot-production-${CI_COMMIT_SHA}.ipa "$(expo url:ipa --non-interactive)"
+  artifacts:
+    name: 'mobile-production-${CI_COMMIT_SHA}'
+    when: on_success
+    paths:
+      - binaries

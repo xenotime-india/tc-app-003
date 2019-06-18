@@ -1,0 +1,14 @@
+language: node_js
+node_js:
+  - lts/*
+
+script:
+  - echo "test disabled"
+jobs:
+  include:
+    - stage: deploy
+      node_js: lts/*
+      script:
+        - yarn install
+        - yarn run expo login -u $EXPO_USERNAME -p $EXPO_PASSWORD
+        - yarn run expo publish --non-interactive --release-channel $EXP_RELEASE_CHANNEL
