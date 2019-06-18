@@ -1,6 +1,7 @@
 {
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
+    "heroku-postbuild": "./ci_set_env.sh && ./ci_publish_to_expo.sh",
     "start": "[ \"$NODE_ENV\" = \"production\" ] && echo \"Skipping build\" || expo start -c",
     "android": "expo start --android",
     "ios": "expo start --ios",
